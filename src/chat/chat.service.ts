@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Conversation } from '../entities/conversation.entity';
 import { ConversationMember } from '../entities/conversation-member.entity';
+import { Message } from '../entities/message.entity';
 import { User } from '../entities/user.entity';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 
@@ -13,6 +18,8 @@ export class ChatService {
     private conversationRepository: Repository<Conversation>,
     @InjectRepository(ConversationMember)
     private memberRepository: Repository<ConversationMember>,
+    @InjectRepository(Message)
+    private messageRepository: Repository<Message>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
@@ -66,5 +73,28 @@ export class ChatService {
     });
 
     return memberships.map((m) => m.conversation);
+  }
+
+  async saveMessage(userId: number, conversationId: number, content: string) {
+    const membership = await this.memberRepository.findOne({
+      where: { user: { id: userId }, conversation: { id: conversationId } },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('Bu söhbətə mesaj yazmaq icazəniz yoxdur.');
+    }
+
+    const conversation = await this.conversationRepository.findOne({
+      where: { id: conversationId },
+    });
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    const message = this.messageRepository.create({
+      content: content,
+      conversation: conversation!,
+      sender: user!,
+    });
+
+    return await this.messageRepository.save(message);
   }
 }
