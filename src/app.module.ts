@@ -7,6 +7,8 @@ import { ConversationMember } from './entities/conversation-member.entity';
 import { Message } from './entities/message.entity';
 import { Attachment } from './entities/attachment.entity';
 import { MessageReaction } from './entities/message-reaction.entity';
+import { AuthModule } from './auth/auth.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { MessageReaction } from './entities/message-reaction.entity';
         synchronize: true,
       }),
     }),
+    AuthModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],
