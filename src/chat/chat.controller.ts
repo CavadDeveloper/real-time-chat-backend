@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  Req,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -20,5 +29,20 @@ export class ChatController {
   getUserConversation(@Req() req: any) {
     const userId = req.user.userId;
     return this.chatService.getUserConversations(userId);
+  }
+  @Get(':id/messages')
+  getMessages(
+    @Req() req: any,
+    @Param('id') conversationId: number,
+    @Query('cursor') cursor?: number,
+    @Query('limit') limit?: number,
+  ) {
+    const userId = req.user.userId;
+    return this.chatService.getMessages(
+      userId,
+      Number(conversationId),
+      cursor ? Number(cursor) : undefined,
+      limit ? Number(limit) : 20,
+    );
   }
 }

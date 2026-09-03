@@ -97,4 +97,44 @@ export class ChatService {
 
     return await this.messageRepository.save(message);
   }
+  async getMessages(
+    userId: number,
+    conversationId: number,
+    cursor?: number,
+    limit: number = 20,
+  ) {
+    const membership = await this.memberRepository.findOne({
+      where: { user: { id: userId }, conversation: { id: conversationId } },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException(
+        'Bu söhbətin tarixçəsinə baxmaq icazəniz yoxdur.',
+      );
+    }
+
+    const query = this.messageRepository
+      .createQueryBuilder('message')
+      .leftJoinAndSelect('message.sender', 'sender')
+      .where('message.conversationId = :conversationId', { conversationId })
+      .orderBy('message.id', 'DESC')
+      .take(limit + 1);
+
+    if (cursor) {
+      query.andWhere('message.id < :cursor', { cursor });
+    }
+
+    const messages = await query.getMany();
+
+    let nextCursor: number | null = null;
+    if (messages.length > limit) {
+      messages.pop();
+      nextCursor = messages[messages.length - 1].id;
+    }
+
+    return {
+      data: messages.reverse(),
+      nextCursor,
+    };
+  }
 }
