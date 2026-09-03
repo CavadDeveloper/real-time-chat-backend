@@ -58,4 +58,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('error', { message: error.message });
     }
   }
+  @SubscribeMessage('typing')
+  handleTyping(
+    @MessageBody()
+    data: { conversationId: number; userId: number; username: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.to(`room_${data.conversationId}`).emit('user_typing', {
+      userId: data.userId,
+      username: data.username,
+      conversationId: data.conversationId,
+    });
+  }
+
+  @SubscribeMessage('stop_typing')
+  handleStopTyping(
+    @MessageBody() data: { conversationId: number; userId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.to(`room_${data.conversationId}`).emit('user_stop_typing', {
+      userId: data.userId,
+      conversationId: data.conversationId,
+    });
+  }
 }
