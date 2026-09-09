@@ -94,4 +94,44 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       readAt: new Date(),
     });
   }
+  @SubscribeMessage('edit_message')
+  async handleEditMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    data: {
+      messageId: number;
+      conversationId: number;
+      userId: number;
+      newContent: string;
+    },
+  ) {
+    const updatedMessage = await this.chatService.editMessage(
+      data.messageId,
+      data.userId,
+      data.newContent,
+    );
+
+    this.server
+      .to(`conversation_${data.conversationId}`)
+      .emit('message_updated', updatedMessage);
+  }
+
+  @SubscribeMessage('delete_message')
+  async handleDeleteMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    data: { messageId: number; conversationId: number; userId: number },
+  ) {
+    const deletedMessage = await this.chatService.deleteMessage(
+      data.messageId,
+      data.userId,
+    );
+
+    this.server
+      .to(`conversation_${data.conversationId}`)
+      .emit('message_deleted', {
+        messageId: deletedMessage.id,
+        isDeleted: true,
+      });
+  }
 }

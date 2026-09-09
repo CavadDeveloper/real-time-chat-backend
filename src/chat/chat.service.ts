@@ -151,4 +151,32 @@ export class ChatService {
     });
     return this.messageReadRepository.save(messageRead);
   }
+  async editMessage(messageId: number, userId: number, newContent: string) {
+    const message = await this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: {
+        sender: true,
+      },
+    });
+    if (!message || message.sender.id !== userId) {
+      throw new Error('Unauthorized or message not found');
+    }
+    message.content = newContent;
+    message.isEdited = true;
+    return this.messageRepository.save(message);
+  }
+  async deleteMessage(messageId: number, userId: number) {
+    const message = await this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: {
+        sender: true,
+      },
+    });
+    if (!message || message.sender.id !== userId) {
+      throw new Error('Unauthorized or message not found');
+    }
+    message.isDeleted = true;
+    message.content = 'This message was deleted';
+    return this.messageRepository.save(message);
+  }
 }
