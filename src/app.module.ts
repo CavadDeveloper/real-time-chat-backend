@@ -9,6 +9,7 @@ import { Attachment } from './entities/attachment.entity';
 import { MessageReaction } from './entities/message-reaction.entity';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
+import { MessageRead } from './entities/message-read.entity';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ChatModule } from './chat/chat.module';
           Message,
           Attachment,
           MessageReaction,
+          MessageRead,
         ],
         synchronize: true,
       }),

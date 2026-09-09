@@ -7,10 +7,17 @@ import { Conversation } from '../entities/conversation.entity';
 import { ConversationMember } from '../entities/conversation-member.entity';
 import { Message } from '../entities/message.entity';
 import { User } from '../entities/user.entity';
+import { MessageRead } from 'src/entities/message-read.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Conversation, ConversationMember, Message, User]),
+    TypeOrmModule.forFeature([
+      Conversation,
+      ConversationMember,
+      Message,
+      User,
+      MessageRead,
+    ]),
   ],
   controllers: [ChatController],
   providers: [ChatService, ChatGateway],

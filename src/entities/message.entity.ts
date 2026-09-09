@@ -12,6 +12,7 @@ import { User } from './user.entity';
 import { Conversation } from './conversation.entity';
 import { Attachment } from './attachment.entity';
 import { MessageReaction } from './message-reaction.entity';
+import { MessageRead } from './message-read.entity';
 
 @Entity('messages')
 export class Message {
@@ -56,6 +57,8 @@ export class Message {
     cascade: true,
   })
   reactions!: MessageReaction[];
+  @OneToMany(() => MessageRead, (read) => read.message)
+  reads: MessageRead[];
 
   @CreateDateColumn()
   @Index()

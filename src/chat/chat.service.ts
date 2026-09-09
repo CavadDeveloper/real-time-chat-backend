@@ -10,10 +10,13 @@ import { ConversationMember } from '../entities/conversation-member.entity';
 import { Message } from '../entities/message.entity';
 import { User } from '../entities/user.entity';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { MessageRead } from 'src/entities/message-read.entity';
 
 @Injectable()
 export class ChatService {
   constructor(
+    @InjectRepository(MessageRead)
+    private readonly messageReadRepository: Repository<MessageRead>,
     @InjectRepository(Conversation)
     private conversationRepository: Repository<Conversation>,
     @InjectRepository(ConversationMember)
@@ -136,5 +139,16 @@ export class ChatService {
       data: messages.reverse(),
       nextCursor,
     };
+  }
+  async markMessageAsRead(messageId: number, userId: number) {
+    const existing = await this.messageReadRepository.findOne({
+      where: { message: { id: messageId }, user: { id: userId } },
+    });
+    if (existing) return existing;
+    const messageRead = this.messageReadRepository.create({
+      message: { id: messageId },
+      user: { id: userId },
+    });
+    return this.messageReadRepository.save(messageRead);
   }
 }
