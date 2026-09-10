@@ -58,7 +58,7 @@ export class Message {
   })
   reactions!: MessageReaction[];
   @OneToMany(() => MessageRead, (read) => read.message)
-  reads: MessageRead[];
+  reads!: MessageRead[];
 
   @CreateDateColumn()
   @Index()

@@ -17,7 +17,10 @@ import { ChatService } from './chat.service';
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
+
+  // Onlayn istifadəçiləri izləmək üçün: userId -> socketId
+  private onlineUsers = new Map<number, string>();
 
   constructor(private readonly chatService: ChatService) {}
 
@@ -27,6 +30,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     console.log(`İstifadəçi ayrıldı: ${client.id}`);
+    for (const [userId, socketId] of this.onlineUsers.entries()) {
+      if (socketId === client.id) {
+        this.onlineUsers.delete(userId);
+        this.server.emit('user_offline', { userId });
+        break;
+      }
+    }
+  }
+
+  @SubscribeMessage('user_connected')
+  handleUserConnected(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { userId: number },
+  ) {
+    this.onlineUsers.set(data.userId, client.id);
+    this.server.emit('user_online', { userId: data.userId });
   }
 
   @SubscribeMessage('join_room')
@@ -54,10 +73,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server
         .to(`room_${data.conversationId}`)
         .emit('new_message', savedMessage);
-    } catch (error) {
+    } catch (error: any) {
       client.emit('error', { message: error.message });
     }
   }
+
   @SubscribeMessage('typing')
   handleTyping(
     @MessageBody()
@@ -81,6 +101,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       conversationId: data.conversationId,
     });
   }
+
   @SubscribeMessage('mark_as_read')
   async handleMarkAsRead(
     @ConnectedSocket() client: Socket,
@@ -88,12 +109,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     data: { messageId: number; conversationId: number; userId: number },
   ) {
     await this.chatService.markMessageAsRead(data.messageId, data.userId);
-    this.server.to(`conversation_${data.conversationId}`).emit('message_read', {
+    this.server.to(`room_${data.conversationId}`).emit('message_read', {
       messageId: data.messageId,
       userId: data.userId,
       readAt: new Date(),
     });
   }
+
   @SubscribeMessage('edit_message')
   async handleEditMessage(
     @ConnectedSocket() client: Socket,
@@ -112,7 +134,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     this.server
-      .to(`conversation_${data.conversationId}`)
+      .to(`room_${data.conversationId}`)
       .emit('message_updated', updatedMessage);
   }
 
@@ -127,11 +149,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       data.userId,
     );
 
-    this.server
-      .to(`conversation_${data.conversationId}`)
-      .emit('message_deleted', {
-        messageId: deletedMessage.id,
-        isDeleted: true,
-      });
+    this.server.to(`room_${data.conversationId}`).emit('message_deleted', {
+      messageId: deletedMessage.id,
+      isDeleted: true,
+    });
+  }
+  @SubscribeMessage('get_messages')
+  async handleGetMessages(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    data: { conversationId: number; limit?: number; offset?: number },
+  ) {
+    const messages = await this.chatService.getMessageForConversation(
+      data.conversationId,
+      data.limit || 20,
+      data.offset || 0,
+    );
+    client.emit('messages_list', messages);
   }
 }

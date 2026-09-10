@@ -12,30 +12,29 @@ import { Message } from './message.entity';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ unique: true })
-  username: string;
+  username!: string;
 
   @Column({ unique: true })
-  email: string;
+  email!: string;
 
   @Column()
-  passwordHash: string;
+  passwordHash!: string;
 
   @Column({ default: 'offline' })
-  status: string;
+  status!: string;
 
-  // Xətanı həll edən əlaqələr:
   @OneToMany(() => ConversationMember, (member) => member.user)
-  memberships: ConversationMember[];
+  memberships!: ConversationMember[];
 
   @OneToMany(() => Message, (message) => message.sender)
-  messages: Message[];
+  messages!: Message[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

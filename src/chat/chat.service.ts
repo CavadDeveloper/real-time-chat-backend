@@ -179,4 +179,17 @@ export class ChatService {
     message.content = 'This message was deleted';
     return this.messageRepository.save(message);
   }
+  async getMessageForConversation(
+    conversationId: number,
+    limit = 20,
+    offset = 0,
+  ) {
+    return this.messageRepository.find({
+      where: { conversation: { id: conversationId } },
+      relations: { sender: true },
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+  }
 }

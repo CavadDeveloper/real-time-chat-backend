@@ -11,16 +11,16 @@ import { User } from './user.entity';
 @Entity('message_reads')
 export class MessageRead {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @ManyToOne(() => Message, (message) => message.reads, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'messageId' })
-  message: Message;
+  message!: Message;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @CreateDateColumn()
-  readAt: Date;
+  readAt!: Date;
 }
