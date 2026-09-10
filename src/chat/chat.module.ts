@@ -8,6 +8,7 @@ import { ConversationMember } from '../entities/conversation-member.entity';
 import { Message } from '../entities/message.entity';
 import { User } from '../entities/user.entity';
 import { MessageRead } from 'src/entities/message-read.entity';
+import { MessageReaction } from 'src/entities/message-reaction.entity';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MessageRead } from 'src/entities/message-read.entity';
       Message,
       User,
       MessageRead,
+      MessageReaction,
     ]),
   ],
   controllers: [ChatController],

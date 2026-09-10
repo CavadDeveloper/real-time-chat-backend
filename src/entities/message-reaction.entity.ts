@@ -1,23 +1,27 @@
 import {
-  Column,
-  PrimaryGeneratedColumn,
   Entity,
+  PrimaryGeneratedColumn,
+  Column,
   ManyToOne,
-  Unique,
+  CreateDateColumn,
 } from 'typeorm';
-import { Message } from './message.entity';
 import { User } from './user.entity';
+import { Message } from './message.entity';
+
 @Entity('message_reactions')
-@Unique(['message', 'user', 'emoji'])
 export class MessageReaction {
   @PrimaryGeneratedColumn()
-  id!: number;
+  id: number;
+
   @Column()
-  emoji!: string;
-  @ManyToOne(() => Message, (message) => message.reactions, {
-    onDelete: 'CASCADE',
-  })
-  message!: Message;
+  reaction: string;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  user!: User;
+  user: User;
+
+  @ManyToOne(() => Message, { onDelete: 'CASCADE' })
+  message: Message;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

@@ -195,4 +195,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
     }
   }
+  @SubscribeMessage('add_reaction')
+  async handleAddReaction(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    data: {
+      messageId: number;
+      userId: number;
+      reaction: string;
+      conversationId: number;
+    },
+  ) {
+    const result = await this.chatService.addReaction(
+      data.userId,
+      data.messageId,
+      data.reaction,
+    );
+
+    this.server
+      .to(`room_${data.conversationId}`)
+      .emit('message_reaction_updated', {
+        ...result,
+        conversationId: data.conversationId,
+      });
+  }
 }

@@ -11,6 +11,8 @@ import { Message } from '../entities/message.entity';
 import { User } from '../entities/user.entity';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { MessageRead } from 'src/entities/message-read.entity';
+import { MessageReaction } from 'src/entities/message-reaction.entity';
+import { Action } from 'rxjs/internal/scheduler/Action';
 
 @Injectable()
 export class ChatService {
@@ -19,6 +21,8 @@ export class ChatService {
     private readonly messageReadRepository: Repository<MessageRead>,
     @InjectRepository(Conversation)
     private conversationRepository: Repository<Conversation>,
+    @InjectRepository(MessageReaction)
+    private readonly messageReactionRepository: Repository<MessageReaction>,
     @InjectRepository(ConversationMember)
     private memberRepository: Repository<ConversationMember>,
     @InjectRepository(Message)
@@ -244,5 +248,23 @@ export class ChatService {
       conversationId,
       lastReadMessageId: latestMessage.id,
     };
+  }
+  async addReaction(userId: number, messageId: number, reaction: string) {
+    const existing = await this.messageReactionRepository.findOne({
+      where: { user: { id: userId }, message: { id: messageId }, reaction },
+    });
+
+    if (existing) {
+      await this.messageReactionRepository.remove(existing);
+      return { action: 'removed', messageId, userId, reaction };
+    }
+
+    const newReaction = this.messageReactionRepository.create({
+      user: { id: userId },
+      message: { id: messageId },
+      reaction,
+    });
+    await this.messageReactionRepository.save(newReaction);
+    return { action: 'added', messageId, userId, reaction };
   }
 }
