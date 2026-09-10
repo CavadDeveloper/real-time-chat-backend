@@ -167,4 +167,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
     client.emit('messages_list', messages);
   }
+  @SubscribeMessage('get_unread_count')
+  async handleGetUnreadCount(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { conversationId: number; userId: number },
+  ) {
+    const count = await this.chatService.getUnreadCount(
+      data.userId,
+      data.conversationId,
+    );
+    client.emit('unread_count', { conversationId: data.conversationId, count });
+  }
+  @SubscribeMessage('mark_read')
+  async handleMarkRead(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { conversationId: number; userId: number },
+  ) {
+    const result = await this.chatService.markMessagesAsRead(
+      data.userId,
+      data.conversationId,
+    );
+    if (result) {
+      this.server.to(`room_${data.conversationId}`).emit('messages_read', {
+        conversationId: data.conversationId,
+        userId: data.userId,
+        lastReadMessageId: result.lastReadMessageId,
+      });
+    }
+  }
 }

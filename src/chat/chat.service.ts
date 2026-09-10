@@ -192,4 +192,57 @@ export class ChatService {
       skip: offset,
     });
   }
+  async getUnreadCount(
+    userId: number,
+    conversationId: number,
+  ): Promise<number> {
+    const lastRead = await this.messageReadRepository.findOne({
+      where: {
+        user: { id: userId },
+        message: { conversation: { id: conversationId } },
+      },
+      relations: { message: true },
+      order: { readAt: 'DESC' },
+    });
+    const query = this.messageRepository
+      .createQueryBuilder('message')
+      .where('message.conversationId = :conversationId', { conversationId })
+      .andWhere('message.senderId != :userId', { userId });
+
+    if (lastRead && lastRead.message) {
+      query.andWhere('message.createdAt > :lastReadAt', {
+        lastReadAt: lastRead.message.createdAt,
+      });
+    }
+
+    return query.getCount();
+  }
+  async markMessagesAsRead(userId: number, conversationId: number) {
+    const messages = await this.messageRepository.find({
+      where: { conversation: { id: conversationId } },
+      order: { createdAt: 'DESC' },
+      take: 1,
+    });
+    if (messages.length === 0) return;
+    const latestMessage = messages[0];
+    const existingRead = await this.messageReadRepository.findOne({
+      where: {
+        user: { id: userId },
+        message: { id: latestMessage.id },
+      },
+    });
+    if (!existingRead) {
+      const messageRead = this.messageReadRepository.create({
+        user: { id: userId },
+        message: { id: latestMessage.id },
+        readAt: new Date(),
+      });
+      await this.messageReadRepository.save(messageRead);
+    }
+    return {
+      succes: true,
+      conversationId,
+      lastReadMessageId: latestMessage.id,
+    };
+  }
 }
