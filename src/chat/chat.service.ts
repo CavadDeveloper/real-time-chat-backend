@@ -12,7 +12,6 @@ import { User } from '../entities/user.entity';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { MessageRead } from 'src/entities/message-read.entity';
 import { MessageReaction } from 'src/entities/message-reaction.entity';
-import { Action } from 'rxjs/internal/scheduler/Action';
 
 @Injectable()
 export class ChatService {
@@ -266,5 +265,27 @@ export class ChatService {
     });
     await this.messageReactionRepository.save(newReaction);
     return { action: 'added', messageId, userId, reaction };
+  }
+  async searchMessages(
+    userId: number,
+    conversationId: number,
+    queryText: string,
+  ) {
+    const membership = await this.memberRepository.findOne({
+      where: { user: { id: userId }, conversation: { id: conversationId } },
+    });
+    if (!membership) {
+      throw new ForbiddenException(
+        'Bu Söhbətdə axtarış etmək icazəniz yoxdur!',
+      );
+    }
+    return this.messageRepository
+      .createQueryBuilder('message')
+      .leftJoinAndSelect('message.sender', 'sender')
+      .where('message.conversationId=:conversationId', { conversationId })
+      .andWhere('message.content LIKE :query', { query: `%${queryText}%` })
+      .andWhere('message.isDeleted = :isDeleted', { isDeleted: false })
+      .orderBy('message.createdAt', 'DESC')
+      .getMany();
   }
 }

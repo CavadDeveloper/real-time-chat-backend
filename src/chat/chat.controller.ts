@@ -14,7 +14,12 @@ import {
 import { ChatService } from './chat.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -91,5 +96,20 @@ export class ChatController {
       filename: file.originalname,
       mimetype: file.mimetype,
     };
+  }
+
+  @Get(':conversationId/search')
+  @ApiOperation({ summary: 'Söhbət daxilində mesaj axtarışı' })
+  async searchMessages(
+    @Req() req: any,
+    @Param('conversationId') conversationId: number,
+    @Query('q') query: string,
+  ) {
+    const userId = req.user.userId;
+    return this.chatService.searchMessages(
+      userId,
+      Number(conversationId),
+      query,
+    );
   }
 }
